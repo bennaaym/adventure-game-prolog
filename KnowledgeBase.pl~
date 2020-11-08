@@ -1,4 +1,4 @@
-:-dynamic currentLocation/1.
+:-dynamic currentLocation/1,inventory/1.
 
 /* define the connection between the different locations */
 
@@ -8,6 +8,8 @@ connected("forest of giants",south,dungeon).
 connected(dungeon,north,"forest of giants").
 connected(dungeon,south,"final boss room").
 connected(dungeon,east,forest).
+
+connected("final boss room",north,dungeon).
 
 connected(forest,west,dungeon).
 connected(forest,south,temple).
@@ -27,7 +29,7 @@ connected(village,east,"mountain of despair").
 
 
 connected("mage place",north,village).
-connected("mage place",east,"casle of drangleic").
+connected("mage place",east,"castle of drangleic").
 connected("mage place",south,underworld).
 
 
@@ -42,6 +44,8 @@ connected("mountain of despair",west,village).
 connected("castle of drangleic",west,"mage place").
 
 
+
+
 /* define the connection between the main locations and sublocations */
 
 hasPlace(temple,"treasure room").
@@ -54,7 +58,7 @@ hasPlace(underworld,"reaper room").
 
 hasPlace(lake,cave).
 
-hasPlace("mountain of despair",house).
+hasPlace("mountain of despair",hut).
 
 hasPlace("castle of drangleic",cave).
 
@@ -65,13 +69,38 @@ hasChar("mage place",mage).
 
 /*define the connections between the places and objects*/
 
+hasObject("forest of giants","pheonix egg").
+hasObject(maze,"flower of life").
+hasObject(house,"egyptian sword").
+hasObject("treasure room","egyptian treasure").
+hasObject(guild,worriors).
+hasObject(hut,"sword of souls").
+hasObject(hut,"sun symbol").
+hasObject("castle of drangleic",armor).
+hasObject("castle of drangleic","moon symbol").
+hasObject("reaper room","flames of regret").
+
+
+
+/* define requirements to enter a specific room */
+require("forest of giants",[worriors]):-!.
+require("final boss room",["key of fire","key of water","key of earth","key of wind"]):-!.
+require(temple,["egyptian sword"]):-!.
+require(maze,["lantern of truth"]):-!.
+require("castle of drangleic",["mage permission"]):-!.
+require(underworld,["mage permission","sword of souls"]):-!.
+require(lake,["sun symbol","moon symbol"]):-!.
+
+
+require(_,[]).
+
 
 
 
 /* describe environment */
 description(dungeon):-
     nl,
-    write("you're in the dungeon").
+    write("it's dark a cold fire, there is no one here ").
 
 description("forest of giants"):-
     nl,
@@ -129,12 +158,63 @@ description("castle of drangleic"):-
 
 
 
+description(house):-
+    nl,
+    write("pretty old house from the midlle ages").
+
+description(guild):-
+    nl,
+    write("this is a place where warriors come to train, you might find someone to accompany you").
+
+
+description(hut):-
+    nl,
+    write("such a miserable place, negative energy is everywhere, don't stay here long or ...").
+
+
+
+/* define interaction with game characters */
+talkTo("wise man"):-
+  write_ln("Hello warrior, you're at the beginning of a long journey"),
+  write_ln("I have a mission for you,"),
+  write_ln("bring the hidden treasure inside the old temple and I'll give you the   **lantern of truth**"),
+  write_ln("you will need it for the rest of the journey").
+
+
+talkTo(mage):-
+  write_ln("we can talk after you bring me the ** phoenix egg , flower of life **"),
+  write_ln("try to check the maze and the forest of giants if you didn't yet").
+
+
+
 
 /* define movement */
 
 /*initial position when the game start*/
 
 currentLocation(dungeon).
+
+
+enter(_place):-
+  currentLocation(_current),
+  hasPlace(_current,_place),
+  retract(currentLocation(_current)),
+  assert(currentLocation(_place)),
+  look.
+
+enter(_):-
+    currentLocation(_current),
+    write("the is no such place in the "),
+    write_ln(_current).
+
+
+exit:-
+    currentLocation(_place),
+    hasPlace(_current,_place),
+    retract(currentLocation(_place)),
+    assert(currentLocation(_current)),
+    write("you have exit from the "),
+    write_ln(_place).
 
 
 north:- move(north).
@@ -145,6 +225,7 @@ west:- move(west).
 move(_direction):-
     currentLocation(_current),
     connected(_current,_direction,_destination),
+    haveRequirement(_destination),
     retract(currentLocation(_current)),
     assert(currentLocation(_destination)),
     look,
@@ -156,6 +237,19 @@ move(_):-
     write("closed path !").
 
 
+haveRequirement(_destination):-
+    inventory(_collected),
+    require(_destination,_requirements),
+    subset(_requirements,_collected),!.
+
+haveRequirement(_destination):-
+    require(_destination,_requirements),
+    write_ln("warrior, you aren't ready for this yet ..."),
+    write_ln("you need :"),
+    listRequirements(_requirements),
+    fail.
+
+
 /* explore envirement */
 look:-
     currentLocation(_current),
@@ -164,7 +258,10 @@ look:-
     nl,
     listDirections(_current),
     nl,
-    listChars(_current).
+    listPlaces(_current),
+    listChars(_current),
+    listObjects(_current).
+
 
 
 
@@ -182,12 +279,78 @@ listDirections(_).
 
 listChars(_current):-
     hasChar(_current,_char),
-    write_ln("you can see :"),
+    write("you can see :"),
     write_ln(_char),
     fail.
 listChars(_).
 
 
+listPlaces(_current):-
+  hasPlace(_current,_place),
+  write("you can see :"),
+  write_ln(_place),
+  fail,!.
+listPlaces(_).
+
+
+listObjects(_current):-
+    hasObject(_current,_object),
+    write("you can see :"),
+    write_ln(_object),
+    fail.
+listObjects(_).
+
+
+
+listRequirements([]).
+listRequirements([H|Tail]):-
+    tab(2),
+    write("* "),
+    write_ln(H),
+    listRequirements(Tail).
+
+
+
+/* interact with other objects */
+
+inventory([]).
+
+inventory:-
+   inventory(_collected),
+   listInventory(_collected).
+
+listInventory([]):-!.
+listInventory([_object1|Tail]):-
+     tab(2),
+     write("- "),
+     write_ln(_object1),
+     listInventory(Tail),
+     !.
+
+
+
+
+pick(_object):-
+    currentLocation(_current),
+    hasObject(_current,_object),
+    inventory(_collected),
+    append([_object],_collected,_newInventory),
+    retract(inventory(_collected)),
+    assert(inventory(_newInventory)).
+
+
+pick(_):-
+    write_ln("what are you trying to pick !!!").
+
+
+pickAll:-
+    currentLocation(_current),
+    hasObject(_current,_object),
+    inventory(_collected),
+    append([_object],_collected,_newInventory),
+    retract(inventory(_collected)),
+    assert(inventory(_newInventory)),fail.
+pickAll.
 
 
 
@@ -232,5 +395,18 @@ firstExamAnswer(_):-
 
 
 
+
+
+
+
+
+
+
+
+
 /* ending game */
 
+
+
+
+/*utility functions */
