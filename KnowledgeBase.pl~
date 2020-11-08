@@ -1,4 +1,4 @@
-:-dynamic currentLocation/1,inventory/1.
+:-dynamic currentLocation/1, inventory/1,hasObject/2.
 
 /* define the connection between the different locations */
 
@@ -26,7 +26,7 @@ connected(maze,east,lake).
 connected(village,north,maze).
 connected(village,south,"mage place").
 connected(village,east,"mountain of despair").
-
+connected(village,west,forest).
 
 connected("mage place",north,village).
 connected("mage place",east,"castle of drangleic").
@@ -56,7 +56,7 @@ hasPlace(village,guild).
 
 hasPlace(underworld,"reaper room").
 
-hasPlace(lake,cave).
+hasPlace(lake,"water hole").
 
 hasPlace("mountain of despair",hut).
 
@@ -104,7 +104,8 @@ description(dungeon):-
 
 description("forest of giants"):-
     nl,
-   write("the place is full of giants status and bodies, it's not a place you can survive it alone").
+   write("the place is full of giants status and bodies, it's not a place you can survive it alone"),nl,
+   write("with the help of the other warriors, you were able to defeat the giant creature that lives in this forest").
 
 
 
@@ -114,7 +115,8 @@ description(forest):-
 
 description(temple):-
     nl,
-           write("you're inside an Egyptian temple").
+           write("you're inside an Egyptian temple"),nl,
+           write("thanks to the **Egyptian sword** you were able to defeat the creature that protects this temple.").
 
 
 description("treasure room"):-
@@ -181,9 +183,12 @@ talkTo("wise man"):-
   write_ln("you will need it for the rest of the journey").
 
 
+
 talkTo(mage):-
   write_ln("we can talk after you bring me the ** phoenix egg , flower of life **"),
   write_ln("try to check the maze and the forest of giants if you didn't yet").
+
+/* define characters requirements */
 
 
 
@@ -268,7 +273,7 @@ look:-
 listDirections(_current):-
 
     connected(_current,_direction,_),
-    write("the is a path to "),
+    write("there is a path to "),
     write(_direction),
     nl,
     fail.
@@ -333,6 +338,7 @@ listInventory([_object1|Tail]):-
 pick(_object):-
     currentLocation(_current),
     hasObject(_current,_object),
+    retract(hasObject(_current,_object)),
     inventory(_collected),
     append([_object],_collected,_newInventory),
     retract(inventory(_collected)),
@@ -346,12 +352,23 @@ pick(_):-
 pickAll:-
     currentLocation(_current),
     hasObject(_current,_object),
+    retract(hasObject(_current,_object)),
     inventory(_collected),
     append([_object],_collected,_newInventory),
     retract(inventory(_collected)),
-    assert(inventory(_newInventory)),fail.
+    assert(inventory(_newInventory)),
+    fail.
+
 pickAll.
 
+
+drop(_object):-
+    currentLocation(_current),
+    inventory(_collected),
+    delete(_collected,_object,_newInventory),
+    assert(hasObject(_current,_object)),
+    retract(inventory(_collected)),
+    asserta(inventory(_newInventory)).
 
 
 
