@@ -1,4 +1,4 @@
-:-dynamic currentLocation/1, inventory/1,hasObject/2.
+:-dynamic userAnswer/1,currentLocation/1, inventory/1,hasObject/2.
 
 /* define the connection between the different locations */
 
@@ -7,7 +7,7 @@ connected(dungeon,[location(north,"forest of giants"),location(south,"final boss
 connected("final boss room",[location(north,dungeon)]).
 connected(forest,[location(west,dungeon),location(south,temple),location(east,village)]).
 connected(temple,[location(north,forest)]).
-connected(maze,[location(south,village),location(west,"foret of giants"),location(east,lake)]).
+connected(maze,[location(south,village),location(west,"forest of giants"),location(east,lake)]).
 connected(village,[location(north,maze),location(south,"mage place"),location(east,"mountain of despair"),location(west,forest)]).
 connected("mage place",[location(north,village),location(east,"castle of drangleic"),location(south,underworld)]).
 connected(underworld,[location(north,"mage place")]).
@@ -31,7 +31,7 @@ hasChar("mage place",mage).
 
 /*define the connections between the places and objects*/
 
-hasObject("forest of giants",["phoenix egg"]).
+hasObject("forest of giants",["phoenix egg","key of earth"]).
 hasObject(maze,["flower of life"]).
 hasObject(house,["egyptian sword"]).
 hasObject("treasure room",["egyptian treasure"]).
@@ -39,16 +39,19 @@ hasObject(guild,[warriors]).
 hasObject(hut,["sword of souls","sun symbol"]).
 hasObject("castle of drangleic",[armor,"moon symbol"]).
 hasObject("reaper room",["flames of regret"]).
+hasObject("water hole",["key of water","sword of ice and fire"]).
+hasObject(cave,["key of wind"]).
+hasObject(underworld,["key of fire"]).
 
 
 /* define requirements to enter a specific room */
 require("forest of giants",[warriors]):-!.
-require("final boss room",["key of fire","key of water","key of earth","key of wind",armor]):-!.
+require("final boss room",["key of fire","key of water","key of earth","key of wind",armor,"sword of ice and fire"]):-!.
 require(temple,["egyptian sword"]):-!.
 require(maze,["lantern of truth"]):-!.
 require("castle of drangleic",["mage permission"]):-!.
 require(underworld,["mage permission","sword of souls"]):-!.
-require(lake,["sun symbol","moon symbol","water stick"]):-!.
+require(lake,["sun symbol","moon symbol","magic stick","flames of regret"]):-!.
 
 
 require(_,[]).
@@ -75,7 +78,7 @@ description(forest):-
 description(temple):-
     nl,
            write("you're inside an Egyptian temple"),nl,
-           write("thanks to the **Egyptian sword** you were able to defeat the creature that protects this temple.").
+           write("thanks to the **Egyptian sword** you were able to defeat Egyptian boss that protects this temple.").
 
 
 description("treasure room"):-
@@ -99,12 +102,20 @@ description("mage place"):-
 
 description(underworld):-
     nl,
-           write("you can see souls and hear their screams of regret").
+           write("you can see souls and hear their screams of regret"),
+           write("Cerberus attacked you from no where ..."),
+           nl,
+           write("you were able to kill him using the power of sword of souls").
 
 
 description(lake):-
     nl,
-           write("you can see a huge lake in front of you").
+           write("you can see a huge lake in front of you"),nl,
+           write("the monster protecting this place attacked you"),
+           nl,
+           write("you burnt him using the flames of regret you got from the underworld"),
+           nl,
+           write("you used the power of the magic stick,moon symbol and sun symbol to evaporate the lake").
 
 
 description("mountain of despair"):-
@@ -132,6 +143,33 @@ description(hut):-
     nl,
     write("such a miserable place, negative energy is everywhere, don't stay here long or ...").
 
+description(cave):-
+    nl,
+    write("a pretty cold cave, you can hear the drop of water a powerfull wind is coming from the inside").
+
+description("water hole"):-
+    write("you can't see much").
+
+description("reaper room"):-
+    write("flames are every where around ...").
+
+
+
+
+description("final boss room"):-
+    nl,
+    write("the boss attacked  you but your armor is solid enough to protect you"),
+    nl,
+    write("using the sword of ice and fire you killed the final boss"),
+    nl,
+    write("a secret door opened you can see the one piece"),
+    nl,
+    write("one piece is the treasure that can give you all what you need"),
+    nl,
+    write("power,glory and fortune"),
+    nl,
+    write("***********************end**********************"),
+    !.
 
 /* define characters requirements */
 charRequire("wise man",["egyptian treasure"]).
@@ -146,6 +184,8 @@ charGive(mage,["mage permission","magic stick"]).
 
 /* define interaction with game characters */
 talkTo("wise man"):-
+  currentLocation(_current),
+  hasChar(_current,"wise man"),
   write_ln("Hello warrior, you're at the beginning of a long journey"),
   write_ln("I have a mission for you,"),
   write_ln("bring the hidden treasure inside the old temple and I'll give you the   **lantern of truth**"),
@@ -154,8 +194,13 @@ talkTo("wise man"):-
 
 
 talkTo(mage):-
+  currentLocation(_current),
+  hasChar(_current,mage),
   write_ln("we can talk after you bring me the ** phoenix egg , flower of life **"),
   write_ln("try to check the maze and the forest of giants if you didn't yet").
+
+talkTo(_):-
+    write("who are you talking too !!!").
 
 
 give(_char,_objects):-
@@ -257,6 +302,7 @@ haveRequirement(_destination):-
 
 /* explore envirement */
 look:-
+    userAnswer(yes),
     currentLocation(_current),
     write("you're in the "),write(_current),
     description(_current),
@@ -339,7 +385,7 @@ listRequirements([H|Tail]):-
 
 /* interact with other objects */
 
-inventory(["phoenix egg","flower of life"]).
+inventory([]).
 
 inventory:-
    inventory(_collected),
@@ -415,6 +461,7 @@ drop(_):-
 
 /* game entry */
 start:-
+    nl,
     write("Hello warrior, welcome to the dungeon,"),nl,
     write("you came here looking after power, glory, and fortune."),nl,
     write("You're standing in front of the dungeon guardian"),nl,
@@ -423,9 +470,11 @@ start:-
     write("if you respond wrongly you'll be killed by the guardian"),nl,
     write("do you want to accept ? (yes/no)"),nl,
     read(_decision),
-    acceptFirstExam(_decision).
+    acceptFirstExam(_decision),
+    look.
 
 
+userAnswer(no).
 
 acceptFirstExam(yes):-
     nl,
@@ -433,7 +482,6 @@ acceptFirstExam(yes):-
     write_ln("who is the human greatest enemy ?"),
     read(_answer),
     firstExamAnswer(_answer).
-
 acceptFirstExam(_):-
     nl,
      write_ln("you're not qualified to get this journey .come back when you get strong"),nl.
@@ -442,7 +490,10 @@ firstExamAnswer(himself):-
     nl,
     write_ln("Gongrats you've passed your first test"),
     write_ln("you can start your journey now good luck"),
-    write_ln(", you will need it..."),nl.
+    write_ln(", you will need it..."),nl,
+    retract(userAnswer(no)),
+    asserta(userAnswer(yes)).
+
 firstExamAnswer(_):-
     nl,
     write_ln("you're not qualified to get this journey . I'll take your soul now . shine!!").
@@ -454,15 +505,47 @@ firstExamAnswer(_):-
 
 
 
+/* Instructions */
+
+instructions:-
+    write_ln("******************************************************"),
+    write_ln("                    GAME INSTRUCTIONS                 "),
+    write_ln("******************************************************"),
+
+    tab(2),write("start"),tab(2),write_ln("used to start the game"),
+
+    tab(2),write("look :"),tab(1),write_ln("used to look around the current place"),
+
+    tab(2),write("inventory"),tab(2),write_ln("used to see inside you inventory"),
+
+    tab(2),write("north :"),tab(1),write_ln("used to move north"),
+    tab(2),write("east :"),tab(1),write_ln("used to move east"),
+    tab(2),write("south :"),tab(1),write_ln("used to move south"),
+    tab(2),write("west :"),tab(1),write_ln("use to move west"),
+
+    tab(2),write("enter :"),tab(1),write_ln("used to enter closed location like : houses ..."),
+
+    tab(2),write("exit :"),tab(1),write_ln("used to exit from closed place like: houses ..."),
+
+    tab(2),write("pick(object_name) :"),tab(1),write_ln("used to pick a single object from current location if any"),
+
+    tab(2),write("pickAll :"),tab(1),write_ln("used to pick All existing object in the current location"),
+
+    tab(2),write("drop(object_name) :"),tab(1),write_ln("used to drop the object from the inventory if it exist"),
+
+    tab(2),write("talkTo(character_name) :"),tab(1),write_ln("used to talk to a specific character inside the game"),
+
+    tab(2),write("give(character_name,[list of objects]) :"),tab(1),write_ln("used to give object collected from mission to a specific character in order to get rewards from him"),
+      write_ln("******************************************************"),
+      write_ln("                    SIDE NOTES                        "),
+      write_ln("******************************************************"),
+
+      tab(2),write_ln("if the name is composed use double quotes ("") to write it,otherwise you can ignore ("")"),
+
+
+      write_ln("******************************************************").
 
 
 
 
 
-
-/* ending game */
-
-
-
-
-/*utility functions */
