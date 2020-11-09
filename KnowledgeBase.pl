@@ -1,10 +1,9 @@
 :-dynamic userAnswer/1,currentLocation/1, inventory/1,hasObject/2.
 
-/* define the connection between the different locations */
+/* defines the connection between the different locations */
 
 connected("forest of giants",[location(east,maze),location(south,dungeon)]).
 connected(dungeon,[location(north,"forest of giants"),location(south,"final boss room"),location(east,forest)]).
-connected("final boss room",[location(north,dungeon)]).
 connected(forest,[location(west,dungeon),location(south,temple),location(east,village)]).
 connected(temple,[location(north,forest)]).
 connected(maze,[location(south,village),location(west,"forest of giants"),location(east,lake)]).
@@ -15,7 +14,7 @@ connected(lake,[location(west,maze)]).
 connected("mountain of despair",[location(west,village)]).
 connected("castle of drangleic",[location(west,"mage place")]).
 
-/* define the connection between the main locations and sublocations */
+/* defines the connection between the main locations and sublocations */
 
 hasPlace(temple,["treasure room"]).
 hasPlace(village,[house,guild]).
@@ -24,12 +23,12 @@ hasPlace(lake,["water hole"]).
 hasPlace("mountain of despair",[hut]).
 hasPlace("castle of drangleic",[cave]).
 
-/*define the connections between the mail locations and the characters */
+/*defines the connections between the main locations and the characters */
 
 hasChar(forest,"wise man").
 hasChar("mage place",mage).
 
-/*define the connections between the places and objects*/
+/*defines the connections between the places and objects*/
 
 hasObject("forest of giants",["phoenix egg","key of earth"]).
 hasObject(maze,["flower of life"]).
@@ -44,7 +43,7 @@ hasObject(cave,["key of wind"]).
 hasObject(underworld,["key of fire"]).
 
 
-/* define requirements to enter a specific room */
+/* defines requirements to enter a specific location */
 require("forest of giants",[warriors]):-!.
 require("final boss room",["key of fire","key of water","key of earth","key of wind",armor,"sword of ice and fire"]):-!.
 require(temple,["egyptian sword"]):-!.
@@ -52,8 +51,6 @@ require(maze,["lantern of truth"]):-!.
 require("castle of drangleic",["mage permission"]):-!.
 require(underworld,["mage permission","sword of souls"]):-!.
 require(lake,["sun symbol","moon symbol","magic stick","flames of regret"]):-!.
-
-
 require(_,[]).
 
 
@@ -162,16 +159,16 @@ description("final boss room"):-
     nl,
     write("using the sword of ice and fire you killed the final boss"),
     nl,
-    write("a secret door opened you can see the one piece"),
+    write("a secret door opened you can see the one piece of this world"),
     nl,
-    write("one piece is the treasure that can give you all what you need"),
+    write("it is the treasure that can give you all what you need"),
     nl,
     write("power,glory and fortune"),
     nl,
     write("***********************end**********************"),
     !.
 
-/* define characters requirements */
+/* define characters requirements and gifts */
 charRequire("wise man",["egyptian treasure"]).
 charRequire(mage,["flower of life","phoenix egg"]).
 
@@ -182,7 +179,7 @@ charGive(mage,["mage permission","magic stick"]).
 
 
 
-/* define interaction with game characters */
+/* defines interactions with game characters */
 talkTo("wise man"):-
   currentLocation(_current),
   hasChar(_current,"wise man"),
@@ -225,22 +222,14 @@ give(_,_):-
 
 
 
-
-
-
-
-
-/* define characters requirements */
-
-
-
-
 /* define movement */
 
 /*initial position when the game start*/
 
 currentLocation(dungeon).
 
+
+/* entering and exiting closed locations */
 
 enter(_place):-
   currentLocation(_current),
@@ -266,6 +255,8 @@ exit:-
     write_ln(_place).
 
 
+/* moving from a main location to another */
+
 north:- move(north).
 south:-move(south).
 east:-move(east).
@@ -286,6 +277,8 @@ move(_direction):-
 move(_):-
     write("closed path !").
 
+
+/* defines contraints to access some locations */
 
 haveRequirement(_destination):-
     inventory(_collected),
@@ -314,6 +307,8 @@ look:-
     listChars(_current),
     listObjects(_current),
     !.
+
+/* in case of a closed location */
 look:-
     currentLocation(_current),
     listPlaces(_current),
@@ -497,11 +492,6 @@ firstExamAnswer(himself):-
 firstExamAnswer(_):-
     nl,
     write_ln("you're not qualified to get this journey . I'll take your soul now . shine!!").
-
-
-
-
-
 
 
 
