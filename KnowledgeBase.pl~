@@ -8,7 +8,7 @@ connected("final boss room",[location(north,dungeon)]).
 connected(forest,[location(west,dungeon),location(south,temple),location(east,village)]).
 connected(temple,[location(north,forest)]).
 connected(maze,[location(south,village),location(west,"foret of giants"),location(east,lake)]).
-connected(village,[location(north,maze),location(south,"mage place"),location(east,"castle of drangleic"),location(west,forest)]).
+connected(village,[location(north,maze),location(south,"mage place"),location(east,"mountain of despair"),location(west,forest)]).
 connected("mage place",[location(north,village),location(east,"castle of drangleic"),location(south,underworld)]).
 connected(underworld,[location(north,"mage place")]).
 connected(lake,[location(west,maze)]).
@@ -17,19 +17,12 @@ connected("castle of drangleic",[location(west,"mage place")]).
 
 /* define the connection between the main locations and sublocations */
 
-hasPlace(temple,"treasure room").
-
-hasPlace(village,house).
-hasPlace(village,guild).
-
-
-hasPlace(underworld,"reaper room").
-
-hasPlace(lake,"water hole").
-
-hasPlace("mountain of despair",hut).
-
-hasPlace("castle of drangleic",cave).
+hasPlace(temple,["treasure room"]).
+hasPlace(village,[house,guild]).
+hasPlace(underworld,["reaper room"]).
+hasPlace(lake,["water hole"]).
+hasPlace("mountain of despair",[hut]).
+hasPlace("castle of drangleic",[cave]).
 
 /*define the connections between the mail locations and the characters */
 
@@ -171,7 +164,8 @@ currentLocation(dungeon).
 
 enter(_place):-
   currentLocation(_current),
-  hasPlace(_current,_place),
+  hasPlace(_current,_places),
+  member(_place,_places),
   retract(currentLocation(_current)),
   assert(currentLocation(_place)),
   look,!.
@@ -259,20 +253,6 @@ getDirections([_location|_rest]):-
 
 
 
-
-/*
-listDirections(_current):-
-
-    connected(_current,_direction,_),
-    write("there is a path to "),
-    write(_direction),
-    nl,
-    fail.
-
-listDirections(_).
-*/
-
-
 listChars(_current):-
     hasChar(_current,_char),
     write("you can see :"),
@@ -281,11 +261,22 @@ listChars(_current):-
 listChars(_).
 
 
+
+
+
 listPlaces(_current):-
-  hasPlace(_current,_place),
-  write("you can see :"),
-  write_ln(_place),
-  fail,!.
+  hasPlace(_current,_places),
+  listPlaces(_places),
+  !.
+
+
+
+listPlaces([]).
+listPlaces([_place|_rest]):-
+    write("you can see :"),
+    write_ln(_place),
+    listPlaces(_rest).
+
 listPlaces(_).
 
 
