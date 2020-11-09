@@ -31,17 +31,14 @@ hasChar("mage place",mage).
 
 /*define the connections between the places and objects*/
 
-hasObject("forest of giants","pheonix egg").
-hasObject(maze,"flower of life").
-hasObject(house,"egyptian sword").
-hasObject("treasure room","egyptian treasure").
-hasObject(guild,worriors).
-hasObject(hut,"sword of souls").
-hasObject(hut,"sun symbol").
-hasObject("castle of drangleic",armor).
-hasObject("castle of drangleic","moon symbol").
-hasObject("reaper room","flames of regret").
-
+hasObject("forest of giants",["pheonix egg"]).
+hasObject(maze,["flower of life"]).
+hasObject(house,["egyptian sword"]).
+hasObject("treasure room",["egyptian treasure"]).
+hasObject(guild,[warriors]):-!.
+hasObject(hut,["sword of souls","sun symbol"]).
+hasObject("castle of drangleic",[armor,"moon symbol"]).
+hasObject("reaper room",["flames of regret"]).
 
 
 /* define requirements to enter a specific room */
@@ -270,8 +267,6 @@ listPlaces(_current):-
   listPlaces(_places),
   !.
 
-
-
 listPlaces([]).
 listPlaces([_place|_rest]):-
     write("you can see :"),
@@ -282,12 +277,17 @@ listPlaces(_).
 
 
 listObjects(_current):-
-    hasObject(_current,_object),
+    hasObject(_current,_objects),
+    listObjects(_objects),
+    !.
+
+listObjects([]).
+listObjects([_object|_rest]):-
     write("you can see :"),
     write_ln(_object),
-    fail.
-listObjects(_).
+    listObjects(_rest).
 
+listObjects(_).
 
 
 listRequirements([]).
@@ -320,8 +320,11 @@ listInventory([_object1|Tail]):-
 
 pick(_object):-
     currentLocation(_current),
-    hasObject(_current,_object),
-    retract(hasObject(_current,_object)),
+    hasObject(_current,_objects),
+    member(_object,_objects),
+    delete(_objects,_object,_rest),
+    retract(hasObject(_current,_objects)),
+    asserta(hasObject(_current,_rest)),
     inventory(_collected),
     append([_object],_collected,_newInventory),
     retract(inventory(_collected)),
@@ -334,13 +337,13 @@ pick(_):-
 
 pickAll:-
     currentLocation(_current),
-    hasObject(_current,_object),
-    retract(hasObject(_current,_object)),
+    hasObject(_current,_objects),
+    retract(hasObject(_current,_objects)),
     inventory(_collected),
-    append([_object],_collected,_newInventory),
+    append(_objects,_collected,_newInventory),
     retract(inventory(_collected)),
-    assert(inventory(_newInventory)),
-    fail.
+    asserta(inventory(_newInventory)),
+    !.
 
 pickAll.
 
@@ -348,10 +351,27 @@ pickAll.
 drop(_object):-
     currentLocation(_current),
     inventory(_collected),
+    member(_object,_collected),
     delete(_collected,_object,_newInventory),
-    assert(hasObject(_current,_object)),
+    hasObject(_current,_objects),
+    append([_object],_objects,_newObjects),
+    retract(hasObject(_current,_objects)),
+    asserta(hasObject(_current,_newObjects)),
     retract(inventory(_collected)),
-    asserta(inventory(_newInventory)).
+    asserta(inventory(_newInventory)),
+    !.
+drop(_object):-
+     currentLocation(_current),
+     inventory(_collected),
+     member(_object,_collected),
+     delete(_collected,_object,_newInventory),
+     asserta(hasObject(_current,[_object])),
+     retract(inventory(_collected)),
+     asserta(inventory(_newInventory)),
+     !.
+
+drop(_):-
+    write_ln("what are you trying to drop !!!").
 
 
 
