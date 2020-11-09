@@ -2,51 +2,22 @@
 
 /* define the connection between the different locations */
 
-connected("forest of giants",east,maze).
-connected("forest of giants",south,dungeon).
-
-connected(dungeon,north,"forest of giants").
-connected(dungeon,south,"final boss room").
-connected(dungeon,east,forest).
-
-connected("final boss room",north,dungeon).
-
-connected(forest,west,dungeon).
-connected(forest,south,temple).
-connected(forest,east,village).
-
-
-connected(temple,north,forest).
-
-
-connected(maze,south,village).
-connected(maze,west,"forest of giants").
-connected(maze,east,lake).
-
-connected(village,north,maze).
-connected(village,south,"mage place").
-connected(village,east,"mountain of despair").
-connected(village,west,forest).
-
-connected("mage place",north,village).
-connected("mage place",east,"castle of drangleic").
-connected("mage place",south,underworld).
-
-
-connected(underworld,north,"mage place").
-
-
-connected(lake,west,maze).
-
-
-connected("mountain of despair",west,village).
-
-connected("castle of drangleic",west,"mage place").
-
-
-
+connected("forest of giants",[location(east,maze),location(south,dungeon)]).
+connected(dungeon,[location(north,"forest of giants"),location(south,"final boss room"),location(east,forest)]).
+connected("final boss room",[location(north,dungeon)]).
+connected(forest,[location(west,dungeon),location(south,temple),location(east,village)]).
+connected(temple,[location(north,forest)]).
+connected(maze,[location(south,village),location(west,"foret of giants"),location(east,lake)]).
+connected(village,[location(north,maze),location(south,"mage place"),location(east,"castle of drangleic"),location(west,forest)]).
+connected("mage place",[location(north,village),location(east,"castle of drangleic"),location(south,underworld)]).
+connected(underworld,[location(north,"mage place")]).
+connected(lake,[location(west,maze)]).
+connected("mountain of despair",[location(west,village)]).
+connected("castle of drangleic",[location(west,"mage place")]).
 
 /* define the connection between the main locations and sublocations */
+
+
 
 hasPlace(temple,"treasure room").
 
@@ -205,7 +176,7 @@ enter(_place):-
   hasPlace(_current,_place),
   retract(currentLocation(_current)),
   assert(currentLocation(_place)),
-  look.
+  look,!.
 
 enter(_):-
     currentLocation(_current),
@@ -229,7 +200,8 @@ west:- move(west).
 
 move(_direction):-
     currentLocation(_current),
-    connected(_current,_direction,_destination),
+    connected(_current,_locations),
+    member(location(_direction,_destination),_locations),
     haveRequirement(_destination),
     retract(currentLocation(_current)),
     assert(currentLocation(_destination)),
@@ -261,15 +233,36 @@ look:-
     write("you're in the "),write(_current),
     description(_current),
     nl,
-    listDirections(_current),
+    connected(_current,_locations),
+    getDirections(_locations),
     nl,
     listPlaces(_current),
     listChars(_current),
-    listObjects(_current).
+    listObjects(_current),
+    !.
+look:-
+    currentLocation(_current),
+    listPlaces(_current),
+    listChars(_current),
+    listObjects(_current),
+    !.
+
+getDirection(location(_direction,_)):-
+    write("there is a path to :"),
+    write(_direction),
+    nl,!.
+
+
+
+getDirections([]).
+getDirections([_location|_rest]):-
+    getDirection(_location),
+    getDirections(_rest).
 
 
 
 
+/*
 listDirections(_current):-
 
     connected(_current,_direction,_),
@@ -279,7 +272,7 @@ listDirections(_current):-
     fail.
 
 listDirections(_).
-
+*/
 
 
 listChars(_current):-
