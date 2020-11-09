@@ -31,24 +31,24 @@ hasChar("mage place",mage).
 
 /*define the connections between the places and objects*/
 
-hasObject("forest of giants",["pheonix egg"]).
+hasObject("forest of giants",["phoenix egg"]).
 hasObject(maze,["flower of life"]).
 hasObject(house,["egyptian sword"]).
 hasObject("treasure room",["egyptian treasure"]).
-hasObject(guild,[warriors]):-!.
+hasObject(guild,[warriors]).
 hasObject(hut,["sword of souls","sun symbol"]).
 hasObject("castle of drangleic",[armor,"moon symbol"]).
 hasObject("reaper room",["flames of regret"]).
 
 
 /* define requirements to enter a specific room */
-require("forest of giants",[worriors]):-!.
-require("final boss room",["key of fire","key of water","key of earth","key of wind"]):-!.
+require("forest of giants",[warriors]):-!.
+require("final boss room",["key of fire","key of water","key of earth","key of wind",armor]):-!.
 require(temple,["egyptian sword"]):-!.
 require(maze,["lantern of truth"]):-!.
 require("castle of drangleic",["mage permission"]):-!.
 require(underworld,["mage permission","sword of souls"]):-!.
-require(lake,["sun symbol","moon symbol"]):-!.
+require(lake,["sun symbol","moon symbol","water stick"]):-!.
 
 
 require(_,[]).
@@ -133,6 +133,16 @@ description(hut):-
     write("such a miserable place, negative energy is everywhere, don't stay here long or ...").
 
 
+/* define characters requirements */
+charRequire("wise man",["egyptian treasure"]).
+charRequire(mage,["flower of life","phoenix egg"]).
+
+
+charGive("wise man",["lantern of truth"]).
+charGive(mage,["mage permission","magic stick"]).
+
+
+
 
 /* define interaction with game characters */
 talkTo("wise man"):-
@@ -146,6 +156,34 @@ talkTo("wise man"):-
 talkTo(mage):-
   write_ln("we can talk after you bring me the ** phoenix egg , flower of life **"),
   write_ln("try to check the maze and the forest of giants if you didn't yet").
+
+
+give(_char,_objects):-
+    currentLocation(_current),
+    hasChar(_current,_char),
+    charRequire(_char,_requirement),
+    subset(_objects,_requirement),
+    inventory(_collected),
+    subset(_objects,_collected),
+    subtract(_collected,_objects,_newInventory),
+    charGive(_char,_gives),
+    append(_newInventory,_gives,_newInventory2),
+    retract(inventory(_collected)),
+    asserta(inventory(_newInventory2)),
+    write("Great job warrior, I give you"),
+    write_ln(_gives),
+    write_ln("check you inventory"),
+    !.
+
+give(_,_):-
+     write_ln("warrior!! what are you trying to do").
+
+
+
+
+
+
+
 
 /* define characters requirements */
 
@@ -301,7 +339,7 @@ listRequirements([H|Tail]):-
 
 /* interact with other objects */
 
-inventory([]).
+inventory(["phoenix egg","flower of life"]).
 
 inventory:-
    inventory(_collected),
