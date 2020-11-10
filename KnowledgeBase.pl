@@ -185,7 +185,7 @@ talkTo("wise man"):-
   hasChar(_current,"wise man"),
   write_ln("Hello warrior, you're at the beginning of a long journey"),
   write_ln("I have a mission for you,"),
-  write_ln("bring the hidden treasure inside the old temple and I'll give you the   **lantern of truth**"),
+  write_ln("bring me the egyptian treasure inside the old temple and I'll give you the   **lantern of truth**"),
   write_ln("you will need it for the rest of the journey").
 
 
