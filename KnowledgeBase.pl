@@ -1,5 +1,5 @@
-:-dynamic userAnswer/1,currentLocation/1, inventory/1,hasObject/2.
-
+:-dynamic userAnswer/1,currentLocation/1, inventory/1,hasObject/2,charSpeech/2,
+    bossNarrative/2.
 /* defines the connection between the different locations */
 
 connected("forest of giants",[location(east,maze),location(south,dungeon)]).
@@ -53,6 +53,24 @@ require(underworld,["mage permission","sword of souls"]):-!.
 require(lake,["sun symbol","moon symbol","magic stick","flames of regret"]):-!.
 require(_,[]).
 
+/* Bosses narrative */
+
+bossNarrative(giant,"with the help of the other warriors, you were able to defeat the giant creature that lives in this forest").
+
+bossNarrative(cerberus,"Cerberus attacked you from no where ... , you were able to kill him using the power of sword of souls").
+
+bossNarrative(aquaDragon,"the monster protecting this place attacked you. the monster protecting this place attacked you. you used the power of the magic stick,moon symbol and sun symbol to evaporate the lake").
+
+bossNarrative("egyptian creature","thanks to the **Egyptian sword** you were able to defeat Egyptian boss that protects this temple.").
+
+
+writeNarrative(_boss):-
+     nl,
+     bossNarrative(_boss,_narrative),
+     write_ln(_narrative),
+     retract(bossNarrative(_boss,_narrative)),
+     assert(bossNarrative(_boss,"")).
+
 
 
 
@@ -63,8 +81,10 @@ description(dungeon):-
 
 description("forest of giants"):-
     nl,
-   write("the place is full of giants status and bodies, it's not a place you can survive it alone"),nl,
-   write("with the help of the other warriors, you were able to defeat the giant creature that lives in this forest").
+   write("the place is full of giants status and bodies, it's not a place you would survive it alone"),
+   nl,
+   writeNarrative(giant).
+
 
 
 
@@ -75,8 +95,7 @@ description(forest):-
 description(temple):-
     nl,
            write("you're inside an Egyptian temple"),nl,
-           write("thanks to the **Egyptian sword** you were able to defeat Egyptian boss that protects this temple.").
-
+           writeNarrative("egyptian creature").
 
 description("treasure room"):-
     nl,
@@ -100,19 +119,13 @@ description("mage place"):-
 description(underworld):-
     nl,
            write("you can see souls and hear their screams of regret"),
-           write("Cerberus attacked you from no where ..."),
-           nl,
-           write("you were able to kill him using the power of sword of souls").
+           writeNarrative(cerberus).
 
 
 description(lake):-
     nl,
            write("you can see a huge lake in front of you"),nl,
-           write("the monster protecting this place attacked you"),
-           nl,
-           write("you burnt him using the flames of regret you got from the underworld"),
-           nl,
-           write("you used the power of the magic stick,moon symbol and sun symbol to evaporate the lake").
+           writeNarrative(aquaDragon).
 
 
 description("mountain of despair"):-
@@ -177,24 +190,18 @@ charGive("wise man",["lantern of truth"]).
 charGive(mage,["mage permission","magic stick"]).
 
 
+charSpeech("wise man","Hello warrior, you're at the beginning of a long journey. I have a mission for you, bring me the egyptian treasure inside the old temple and I'll give you the **lantern of truth**.you will need it for the rest of the journey").
+
+charSpeech(mage,"we can talk after you bring me the ** phoenix egg , flower of life **.try to check the maze and the forest of giants if you didn't yet").
 
 
 /* defines interactions with game characters */
-talkTo("wise man"):-
+talkTo(_char):-
   currentLocation(_current),
-  hasChar(_current,"wise man"),
-  write_ln("Hello warrior, you're at the beginning of a long journey"),
-  write_ln("I have a mission for you,"),
-  write_ln("bring me the egyptian treasure inside the old temple and I'll give you the   **lantern of truth**"),
-  write_ln("you will need it for the rest of the journey").
+  hasChar(_current,_char),
+  charSpeech(_char,_speech),
+  write_ln(_speech).
 
-
-
-talkTo(mage):-
-  currentLocation(_current),
-  hasChar(_current,mage),
-  write_ln("we can talk after you bring me the ** phoenix egg , flower of life **"),
-  write_ln("try to check the maze and the forest of giants if you didn't yet").
 
 talkTo(_):-
     write("who are you talking too !!!").
@@ -214,7 +221,11 @@ give(_char,_objects):-
     asserta(inventory(_newInventory2)),
     write("Great job warrior, I give you"),
     write_ln(_gives),
-    write_ln("check you inventory"),
+    write_ln("check your inventory"),
+    charSpeech(_char,_speech),
+    retract(charSpeech(_char,_speech)),
+    assert(charSpeech(_char,"sorry warrior, I can't offer you more objects")),
+
     !.
 
 give(_,_):-
@@ -471,23 +482,29 @@ start:-
 
 userAnswer(no).
 
+answersPool([himself,"himself","human himself","human","itself"]).
+
 acceptFirstExam(yes):-
     nl,
     write_ln("you're a courageous warrior, this is you're enigma :"),
     write_ln("who is the human greatest enemy ?"),
     read(_answer),
     firstExamAnswer(_answer).
+
 acceptFirstExam(_):-
     nl,
      write_ln("you're not qualified to get this journey .come back when you get strong"),nl.
 
-firstExamAnswer(himself):-
+firstExamAnswer(_answer):-
+    answersPool(_possibleAnswers),
+    member(_answer,_possibleAnswers),
     nl,
     write_ln("Gongrats you've passed your first test"),
     write_ln("you can start your journey now good luck"),
     write_ln(", you will need it..."),nl,
     retract(userAnswer(no)),
-    asserta(userAnswer(yes)).
+    asserta(userAnswer(yes)),
+    !.
 
 firstExamAnswer(_):-
     nl,
