@@ -1,5 +1,5 @@
-:-dynamic userAnswer/1,currentLocation/1, inventory/1,hasObject/2,charSpeech/2,
-    bossNarrative/2.
+:-dynamic currentLocation/1, inventory/1,hasObject/2,charSpeech/2,
+    bossNarrative/2,finished/1.
 /* defines the connection between the different locations */
 
 connected("forest of giants",[location(east,maze),location(south,dungeon)]).
@@ -70,8 +70,6 @@ writeNarrative(_boss):-
      write_ln(_narrative),
      retract(bossNarrative(_boss,_narrative)),
      assert(bossNarrative(_boss,"")).
-
-
 
 
 /* describe environment */
@@ -178,8 +176,9 @@ description("final boss room"):-
     nl,
     write("power,glory and fortune"),
     nl,
-    write("***********************end**********************"),
-    !.
+    retract(finished(no)),
+    asserta(finished(yes)),
+    write("***********************end**********************").
 
 /* define characters requirements and gifts */
 charRequire("wise man",["egyptian treasure"]).
@@ -204,7 +203,7 @@ talkTo(_char):-
 
 
 talkTo(_):-
-    write("who are you talking too !!!").
+    write_ln("who are you talking too !!!").
 
 
 give(_char,_objects):-
@@ -224,7 +223,7 @@ give(_char,_objects):-
     write_ln("check your inventory"),
     charSpeech(_char,_speech),
     retract(charSpeech(_char,_speech)),
-    assert(charSpeech(_char,"sorry warrior, I can't offer you more objects")),
+    asserta(charSpeech(_char,"sorry warrior, I can't offer you more objects")),
 
     !.
 
@@ -247,7 +246,7 @@ enter(_place):-
   hasPlace(_current,_places),
   member(_place,_places),
   retract(currentLocation(_current)),
-  assert(currentLocation(_place)),
+  asserta(currentLocation(_place)),
   look,!.
 
 enter(_):-
@@ -286,7 +285,7 @@ move(_direction):-
 
 
 move(_):-
-    write("closed path !").
+    write_ln("closed path !").
 
 
 /* defines contraints to access some locations */
@@ -306,7 +305,6 @@ haveRequirement(_destination):-
 
 /* explore envirement */
 look:-
-    userAnswer(yes),
     currentLocation(_current),
     write("you're in the "),write(_current),
     description(_current),
@@ -394,6 +392,11 @@ listRequirements([H|Tail]):-
 inventory([]).
 
 inventory:-
+     inventory([]),
+     write_ln("your inventory is empty try to collect some objects first :) "),
+     !.
+
+inventory:-
    inventory(_collected),
    listInventory(_collected).
 
@@ -402,9 +405,7 @@ listInventory([_object1|Tail]):-
      tab(2),
      write("- "),
      write_ln(_object1),
-     listInventory(Tail),
-     !.
-
+     listInventory(Tail).
 
 
 
@@ -435,7 +436,8 @@ pickAll:-
     asserta(inventory(_newInventory)),
     !.
 
-pickAll.
+pickAll:-
+     write_ln("there is nothing pickable here").
 
 
 drop(_object):-
@@ -466,7 +468,10 @@ drop(_):-
 
 
 /* game entry */
+
+/* game entry point */
 start:-
+    asserta(finished(no)),
     nl,
     write("Hello warrior, welcome to the dungeon,"),nl,
     write("you came here looking after power, glory, and fortune."),nl,
@@ -475,43 +480,194 @@ start:-
     write("you have to solve the next enigma in order to start your journey."),nl,
     write("if you respond wrongly you'll be killed by the guardian"),nl,
     write("do you want to accept ? (yes/no)"),nl,
-    read(_decision),
-    acceptFirstExam(_decision),
-    look.
+    readln(_decision),
+    delete(_decision,.,_decision2),
+    acceptFirstExam(_decision2),
+    look,
+    gameLoop,
+    !.
+start.
 
 
-userAnswer(no).
+
+gameLoop:-
+     repeat,
+     process_sentence(_c),
+     execute_command(_c),
+     (_c==quit; end).
+
+
+
+execute_command(instructions):-instructions,!.
+execute_command(look):-look,!.
+execute_command(inventory):-inventory,!.
+execute_command(north):-north,!.
+execute_command(east):-east,!.
+execute_command(south):-south,!.
+execute_command(west):-west,!.
+execute_command(move(_direction)):-move(_direction),!.
+execute_command(enter(_place)):-enter(_place),!.
+execute_command(exit):-exit,!.
+execute_command(pick(_object)):- pick(_object),!.
+execute_command(pickAll):-pickAll,!.
+execute_command(drop(_object)):-drop(_object),!.
+execute_command(talkTo(_char)):-talkTo(_char),!.
+execute_command(give((_char,_objects))):-give(_char,_objects),!.
+execute_command(quit):-quit,!.
+
+execute_command(_):-
+     write_ln("warrior, what are you trying to say !!!"),!.
+
+
+quit:-
+     write_ln("you quit the game").
+
+
+
+end:-
+     finished(yes),!.
+
 
 answersPool([himself,"himself","human himself","human","itself"]).
 
-acceptFirstExam(yes):-
+acceptFirstExam([yes]):-
     nl,
     write_ln("you're a courageous warrior, this is you're enigma :"),
     write_ln("who is the human greatest enemy ?"),
-    read(_answer),
-    firstExamAnswer(_answer).
+    readln(_answer),
+    delete(_answer,.,_answer2),
+    firstExamAnswer(_answer2),
+    !.
 
 acceptFirstExam(_):-
-    nl,
-     write_ln("you're not qualified to get this journey .come back when you get strong"),nl.
 
-firstExamAnswer(_answer):-
+    nl,
+     write_ln("you're not qualified to get this journey .come back when you get strong"),
+     nl,
+     retract(finished(no)),
+     asserta(finished(yes)),
+     fail.
+
+
+firstExamAnswer([H|_]):-
     answersPool(_possibleAnswers),
-    member(_answer,_possibleAnswers),
+    member(H,_possibleAnswers),
     nl,
     write_ln("Gongrats you've passed your first test"),
     write_ln("you can start your journey now good luck"),
     write_ln(", you will need it..."),nl,
-    retract(userAnswer(no)),
-    asserta(userAnswer(yes)),
     !.
 
 firstExamAnswer(_):-
     nl,
-    write_ln("you're not qualified to get this journey . I'll take your soul now . shine!!").
+    write_ln("you're not qualified to get this journey . I'll take your soul now . shine!!"),
+    retract(finished(no)),
+     asserta(finished(yes)),
+     fail.
 
 
 
+
+
+/* NLP */
+
+process_sentence(_c):-
+     nl,
+     readln(_s),
+     delete(_s,.,_s2),
+     sentence(_parsedList,_s2,[]),
+     _c=.._parsedList,
+     !.
+
+process_sentence(_):-
+         write_ln("warrior, are you trying to say something ?"),fail.
+
+sentence([_pred,_arg])-->verb(_pred,_type),nounphrase(_type,_arg).
+sentence([_pred])-->pred(_pred).
+
+
+
+verb(move,player_move)-->[go];[move].
+verb(talkTo ,talk_to_char)-->[talk, to];[ask].
+verb(give,give_char)-->[give].
+verb(enter,enter_place)-->[enter];[go,into].
+verb(pick,pick_object)-->[pick].
+verb(drop,drop_object)-->[drop].
+
+nounphrase(_type,_noun)-->determiner,noun(_type,_noun).
+nounphrase(_type,_noun)-->noun(_type,_noun).
+
+determiner-->[the].
+determiner-->[a].
+
+
+noun(player_move,_arg)-->pred(_arg).
+noun(talk_to_char,_arg)-->[_arg].
+noun(talk_to_char,"wise man")-->[wise,man].
+noun(give_char,(mage,["phoenix egg","flower of life"]))-->
+    [mage,phoenix,egg,and,flower,of,life];[mage,flower,of,life,and,phoenix,egg].
+noun(give_char,("wise man",["egyptian treasure"]))-->[wise,man,egyptian,treasure].
+noun(enter_place,_args)-->[_args].
+noun(enter_place,"treasure room")-->[treasure,room].
+noun(enter_place,"reaper room")-->[reaper,room].
+noun(enter_place,"water hole")-->[water,hole].
+
+noun(pick_object,"phoenix egg")-->[phoenix,egg].
+noun(pick_object,"egyptian treasure")-->[egyptian,treasure].
+noun(pick_object,"flower of life")-->[flower,of,life].
+noun(pick_object,"egyptian sword")-->[egyptian,sword].
+noun(pick_object,"sword of souls")-->[sword,of,souls].
+noun(pick_object,warriors)-->[warriors].
+noun(pick_object,armor)-->[armor].
+noun(pick_object,"sun symbol")-->[sun,symbol].
+noun(pick_object,"moon symbol")-->[moon,symbol].
+noun(pick_object,"key of earth")-->[key,of,earth].
+noun(pick_object,"key of fire")-->[key,of,fire].
+noun(pick_object,"key of wind")-->[key,of,wind].
+noun(pick_object,"key of water")-->[key,of,water].
+noun(pick_object,"sword of ice and fire")-->[sword,of,ice,and,fire].
+noun(pick_object,"flames of regret")-->[flames,of,regret].
+
+
+noun(drop_object,"phoenix egg")-->[phoenix,egg].
+noun(drop_object,"egyptian treasure")-->[egyptian,treasure].
+noun(drop_object,"flower of life")-->[flower,of,life].
+noun(drop_object,"egyptian sword")-->[egyptian,sword].
+noun(drop_object,"sword of souls")-->[sword,of,souls].
+noun(drop_object,warriors)-->[warriors].
+noun(drop_object,armor)-->[armor].
+noun(drop_object,"sun symbol")-->[sun,symbol].
+noun(drop_object,"moon symbol")-->[moon,symbol].
+noun(drop_object,"key of earth")-->[key,of,earth].
+noun(drop_object,"key of fire")-->[key,of,fire].
+noun(drop_object,"key of wind")-->[key,of,wind].
+noun(drop_object,"key of water")-->[key,of,water].
+noun(drop_object,"sword of ice and fire")-->[sword,of,ice,and,fire].
+noun(drop_object,"flames of regret")-->[flames,of,regret].
+noun(drop_object,something)-->[_|_].
+
+
+
+
+
+pred(look)-->[look].
+pred(look)-->[look,around].
+pred(look)-->[observe].
+pred(exit)-->[exit].
+pred(exit)-->[go,out].
+pred(inventory)-->[inventory].
+pred(inventory)-->[check,inventory].
+pred(north)-->[north].
+pred(east)-->[east].
+pred(south)-->[south].
+pred(west)-->[west].
+pred(pickAll)-->[pick,all].
+pred(quit)-->[quit].
+pred(himself)-->[himself].
+
+
+
+'''
 /* Instructions */
 
 instructions:-
@@ -552,7 +708,4 @@ instructions:-
 
       write_ln("******************************************************").
 
-
-
-
-
+'''
